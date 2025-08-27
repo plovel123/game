@@ -118,7 +118,7 @@ body {
 
 .cloud {
   position: absolute;
-  top: 10vh;   
+  top: 7vh;   
   width: 120px;
   height: 80px;
   background: url("images/oblako.png") no-repeat center/contain;
