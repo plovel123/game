@@ -1,4 +1,4 @@
-// game.js — исправленный для устойчивости при множественных нажатиях
+// game.js — no double-jump, obstacles at ground level only
 // Требует: images/cat.png, images/cat_dead.png, crystal.png, fire.png, oblako.png, bg*.png
 
 const game = document.getElementById("game");
@@ -18,11 +18,89 @@ let y = 0;                 // высота кота от земли (px)
 let vy = 0;                // вертикальная скорость (px/s)
 let lives = 3;
 let score = 0;
-let paused = false;
+let paused = true;         // стартуем в паузе (появится Start)
 let obstacles = [];
 let clouds = [];
 
 scoreEl.innerText = "Score: " + score;
+
+// ---------- UI: Start overlay ----------
+let startOverlayEl = null;
+let onStartKey = null;
+
+function createStartOverlay() {
+  if (startOverlayEl) return;
+  const overlay = document.createElement("div");
+  overlay.id = "startOverlay";
+  overlay.style = `
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.65);
+    z-index: 1200;
+  `;
+
+  const box = document.createElement("div");
+  box.style = `
+    background: rgba(18,18,18,0.95);
+    padding: 28px;
+    border-radius: 12px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    width: min(520px, 90vw);
+  `;
+
+  const title = document.createElement("h2");
+  title.textContent = "Press Start";
+  title.style.margin = "0 0 12px 0";
+  const info = document.createElement("p");
+  info.textContent = "Tap / Space to jump. Hold longer for a stronger jump.";
+  info.style.margin = "6px 0 18px 0";
+  const btn = document.createElement("button");
+  btn.id = "startButton";
+  btn.className = "btn primary";
+  btn.textContent = "Start";
+  btn.style.fontSize = "18px";
+  btn.style.padding = "10px 18px";
+
+  box.appendChild(title);
+  box.appendChild(info);
+  box.appendChild(btn);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  startOverlayEl = overlay;
+
+  const removeStartListener = () => {
+    if (onStartKey) {
+      document.removeEventListener("keydown", onStartKey);
+      onStartKey = null;
+    }
+  };
+
+  btn.addEventListener("click", () => {
+    if (paused) startGame();
+    removeStartListener();
+    overlay.remove();
+    startOverlayEl = null;
+  });
+
+  onStartKey = function (e) {
+    if (e.code === "Space" || e.code === "Enter") {
+      if (paused) startGame();
+      removeStartListener();
+      if (startOverlayEl) {
+        startOverlayEl.remove();
+        startOverlayEl = null;
+      }
+      e.preventDefault && e.preventDefault();
+    }
+  };
+  document.addEventListener("keydown", onStartKey);
+}
+createStartOverlay();
 
 // ---------- Background ----------
 const backgrounds = ["images/bg1.PNG", "images/bg2.PNG", "images/bg3.PNG"];
@@ -41,10 +119,18 @@ function renderLives() {
 renderLives();
 
 // ---------- Movement / spawn params ----------
-let obstacleSpeed = 5;
-let speedIncrease = 0.5;
-let speedInterval = 10000;
-let maxSpeed = 15;
+let obstacleSpeed = 4.2;
+let speedIncrease = 0.35;
+let speedInterval = 11000;
+let maxSpeed = 11;
+
+// mobile tweak
+const isMobile = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
+if (isMobile) {
+  obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
+  speedIncrease = Math.max(0.12, speedIncrease * 0.55);
+}
+
 function increaseSpeed() {
   if (obstacleSpeed < maxSpeed) {
     obstacleSpeed += speedIncrease;
@@ -56,12 +142,11 @@ increaseSpeed();
 
 // ---------- Hitboxes ----------
 function getHitboxRect(el) {
-  const box = el ? el.querySelector && el.querySelector(".hitbox") : null;
+  const box = el ? (el.querySelector ? el.querySelector(".hitbox") : null) : null;
   if (!box || !box.getBoundingClientRect) {
     try {
       return el.getBoundingClientRect();
     } catch (e) {
-      // покрываем случай, если el уже удалён
       return { left: 0, right: 0, top: 0, bottom: 0 };
     }
   }
@@ -71,7 +156,6 @@ function getHitboxRect(el) {
     return { left: 0, right: 0, top: 0, bottom: 0 };
   }
 }
-
 function isColliding(catEl, obstacleEl) {
   const catBox = getHitboxRect(catEl);
   const obstacleBox = getHitboxRect(obstacleEl);
@@ -84,6 +168,7 @@ function isColliding(catEl, obstacleEl) {
 }
 
 // ---------- Obstacles / Clouds ----------
+// Все препятствия строго на земле (bottom: 0)
 const obstacleTypes = [
   { img: "images/crystal.png", class: "crystal" },
   { img: "images/fire.png", class: "fire" }
@@ -95,13 +180,7 @@ function createObstacle() {
   obstacle.classList.add("obstacle", type.class);
   obstacle.style.backgroundImage = `url(${type.img})`;
   obstacle.style.left = game.offsetWidth + "px";
-
-  if (type.class === "crystal") {
-    obstacle.style.bottom = (Math.random() < 0.25 ? (Math.random() * 40) + "px" : "0px");
-  } else {
-    obstacle.style.bottom = "0px";
-  }
-
+  obstacle.style.bottom = "0px"; // ВСЕ препятствия — на земле
   obstacle.innerHTML = `<div class="hitbox"></div>`;
   game.appendChild(obstacle);
   obstacles.push(obstacle);
@@ -112,19 +191,20 @@ function createCloud() {
   cloud.classList.add("cloud");
   cloud.style.backgroundImage = `url(images/oblako.png)`;
   cloud.style.left = game.offsetWidth + "px";
-  cloud.style.top = (Math.random() * 8 + 14) + "vh";
+  const topVh = (Math.random() * 8 + 2);
+  cloud.style.top = topVh + "vh";
   game.appendChild(cloud);
   clouds.push(cloud);
 }
 
-// ---------- Jump system (physics + buffering + double jump etc.) ----------
+// ---------- Jump system (single jump only) ----------
 const GRAVITY = 2200; // px/s^2
 const BASE_JUMP_HEIGHT = 125; // px for strength = 1
 const MIN_STRENGTH = 0.95;
 const MAX_STRENGTH = 1.85;
 const LONG_PRESS_MS = 380;
 
-const maxJumps = 2;
+const maxJumps = 1;       // <-- Только один прыжок
 let jumpsUsed = 0;
 const coyoteTime = 0.12;
 let lastGroundTime = -9999;
@@ -161,14 +241,14 @@ function startJumpWithStrength(strength) {
   }
 }
 
-// Input handling with guards (ignore key repeat)
+// Input handling: игнорируем ввод, когда стартовый оверлей открыт
 let pressStartTime = 0;
 let pressingKey = false;
 let pressingMouse = false;
 let pressingTouch = false;
 
 document.addEventListener("keydown", (e) => {
-  // игнорируем авто-повторы, чтобы не ресетить pressStartTime
+  if (startOverlayEl) return;            // блокируем ввод до старта
   if (e.repeat) return;
   if ((e.code === "Space" || e.code === "ArrowUp") && !pressingKey) {
     pressingKey = true;
@@ -177,6 +257,7 @@ document.addEventListener("keydown", (e) => {
   }
 });
 document.addEventListener("keyup", (e) => {
+  if (startOverlayEl) return;
   if ((e.code === "Space" || e.code === "ArrowUp") && pressingKey) {
     pressingKey = false;
     const dur = Math.max(0, performance.now() - pressStartTime);
@@ -187,6 +268,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 game.addEventListener("mousedown", (e) => {
+  if (startOverlayEl) return;
   if (e.target.tagName === "BUTTON" || e.target.closest(".modal")) return;
   if (pressingMouse) return;
   pressingMouse = true;
@@ -194,6 +276,7 @@ game.addEventListener("mousedown", (e) => {
   e.preventDefault && e.preventDefault();
 });
 window.addEventListener("mouseup", (e) => {
+  if (startOverlayEl) return;
   if (!pressingMouse) return;
   pressingMouse = false;
   const dur = Math.max(0, performance.now() - pressStartTime);
@@ -203,6 +286,7 @@ window.addEventListener("mouseup", (e) => {
 });
 
 game.addEventListener("touchstart", (e) => {
+  if (startOverlayEl) return;
   if (e.target.tagName === "BUTTON" || e.target.closest(".modal")) return;
   if (pressingTouch) return;
   pressingTouch = true;
@@ -210,6 +294,7 @@ game.addEventListener("touchstart", (e) => {
   e.preventDefault && e.preventDefault();
 }, { passive: false });
 game.addEventListener("touchend", (e) => {
+  if (startOverlayEl) return;
   if (!pressingTouch) return;
   pressingTouch = false;
   const dur = Math.max(0, performance.now() - pressStartTime);
@@ -276,21 +361,24 @@ function loseLife() {
   }, 300);
 }
 
-// ---------- Spawn scheduler (chaotic but safe) ----------
-const MIN_GAP_PX_BASE = 220;
+// ---------- Spawn scheduler ----------
+const MIN_GAP_PX_BASE_DESKTOP = 220;
+const MIN_GAP_PX_BASE_MOBILE = 300;
+const MIN_GAP_PX_BASE = isMobile ? MIN_GAP_PX_BASE_MOBILE : MIN_GAP_PX_BASE_DESKTOP;
+
 let nextObstacleSpawnSec = performance.now() / 1000 + 1.0;
 function sampleExp(mean) {
   return -Math.log(1 - Math.random()) * mean;
 }
 function scheduleNextObstacle() {
   const now = performance.now() / 1000;
-  const speedPxPerSec = Math.max(50, obstacleSpeed * 60);
-  const minGapPx = MIN_GAP_PX_BASE + Math.max(0, obstacleSpeed - 5) * 18;
-  const minIntervalSec = Math.max(0.18, minGapPx / speedPxPerSec);
-  const mean = minIntervalSec * 1.3;
+  const speedPxPerSec = Math.max(40, obstacleSpeed * 60);
+  const minGapPx = MIN_GAP_PX_BASE + Math.max(0, obstacleSpeed - 4) * 22;
+  const minIntervalSec = Math.max(0.20, minGapPx / speedPxPerSec);
+  const mean = minIntervalSec * 1.25;
   let interval = sampleExp(mean);
   if (interval < minIntervalSec) interval = minIntervalSec + Math.random() * 0.25 * minIntervalSec;
-  interval += (Math.random() - 0.5) * 0.15 * interval;
+  interval += (Math.random() - 0.5) * 0.12 * interval;
   nextObstacleSpawnSec = now + interval;
 }
 scheduleNextObstacle();
@@ -298,12 +386,12 @@ scheduleNextObstacle();
 let nextCloudSpawnSec = performance.now() / 1000 + 2.0;
 function scheduleNextCloud() {
   const now = performance.now() / 1000;
-  const mean = 3.5;
+  const mean = 3.8;
   nextCloudSpawnSec = now + Math.max(1.0, sampleExp(mean));
 }
 scheduleNextCloud();
 
-// ---------- Game loop (protected) ----------
+// ---------- Game loop ----------
 let lastTime = performance.now();
 
 function gameLoop(time) {
@@ -312,18 +400,15 @@ function gameLoop(time) {
     lastTime = time;
 
     if (!paused) {
-      // physics for cat
+      // physics
       if (Math.abs(vy) > 0 || y > 0) {
         vy -= GRAVITY * dt;
         y += vy * dt;
         if (y <= 0) {
-          // landed
           y = 0;
           vy = 0;
-          jumpsUsed = 0;
+          jumpsUsed = 0;                 // сбрасываем использование прыжка при касании земли
           lastGroundTime = performance.now() / 1000;
-
-          // buffered jump (jump buffer)
           if (lastJumpRequest) {
             const nowSec = performance.now() / 1000;
             if (nowSec - lastJumpRequest.time <= jumpBufferTime) {
@@ -338,16 +423,13 @@ function gameLoop(time) {
       }
 
       // move obstacles
-      const speedPxPerSec = Math.max(50, obstacleSpeed * 60);
+      const speedPxPerSec = Math.max(40, obstacleSpeed * 60);
       for (let i = obstacles.length - 1; i >= 0; i--) {
         const ob = obstacles[i];
-        // safe parse
         let left = parseFloat(ob.style.left);
         if (!Number.isFinite(left)) left = game.offsetWidth;
         left -= speedPxPerSec * dt;
         ob.style.left = left + "px";
-
-        // collisions and bounds inside try to avoid exceptions stopping the loop
         try {
           if (isColliding(cat, ob)) {
             ob.remove();
@@ -358,7 +440,6 @@ function gameLoop(time) {
         } catch (e) {
           console.error("Collision check error:", e);
         }
-
         if (left < -200) {
           ob.remove();
           obstacles.splice(i, 1);
@@ -392,20 +473,16 @@ function gameLoop(time) {
       }
     }
   } catch (err) {
-    // логируем ошибку, но не позволяем игре "зависнуть"
     console.error("GameLoop error:", err);
   } finally {
-    // гарантируем следующий кадр
     try {
       requestAnimationFrame(gameLoop);
     } catch (e) {
-      // крайне редкий случай
       console.error("requestAnimationFrame failed:", e);
       setTimeout(() => requestAnimationFrame(gameLoop), 1000);
     }
   }
 }
-
 requestAnimationFrame(gameLoop);
 
 // ---------- Leaderboard UI ----------
@@ -426,9 +503,26 @@ showLeaderboardBtn && showLeaderboardBtn.addEventListener("click", async (e) => 
   }
   e.currentTarget && e.currentTarget.blur && e.currentTarget.blur();
 });
-
 closeLeaderboard && closeLeaderboard.addEventListener("click", () => {
   leaderboardModal.style.display = "none";
 });
-
 if (restartButton) restartButton.addEventListener("click", () => location.reload());
+
+// ---------- Start control ----------
+function startGame() {
+  if (!paused) return;
+  paused = false;
+  score = 0;
+  lives = 3;
+  y = 0;
+  vy = 0;
+  obstacles.forEach(o => o.remove());
+  clouds.forEach(c => c.remove());
+  obstacles = [];
+  clouds = [];
+  renderLives();
+  scoreEl.innerText = "Score: " + score;
+  lastTime = performance.now();
+  scheduleNextObstacle();
+  scheduleNextCloud();
+}

@@ -250,6 +250,23 @@ body {
 #connectWallet, #showLeaderboard {
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
+.game-btn {
+  position: absolute;   /* фиксируем позицию */
+  top: 20px;            /* отступ сверху */
+  right: 20px;          /* отступ справа */
+  padding: 10px 20px;
+  background-color: #ff9800;
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 8px;
+  transition: background 0.3s;
+  z-index: 1000;        /* чтобы не перекрывалась другими элементами */
+}
+
+.game-btn:hover {
+  background-color: #e68900;
+}
 @media (max-width: 768px) {
   #game {
     width: 95vw;   /* почти вся ширина */
