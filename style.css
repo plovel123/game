@@ -12,14 +12,22 @@ body {
 
 #game {
   position: relative;
-  width: 100vw;     
-  height: 100vh;       
+  width: 70vw;          /* 70% ширины экрана */
+  height: 70vh;         /* 70% высоты */
+  margin: auto;         /* центрируем */
   overflow: hidden;
+  border: 4px solid #333;   /* можно добавить рамку, чтобы видно было */
+  border-radius: 12px;
 
-  background-image: url("images/bg1.png"); /* твоя картинка */
-  background-repeat: repeat-x; /* дублирование по горизонтали */
-  background-size: auto 100%;  /* высота подгоняется под экран, ширина — исходная */
-  background-position: bottom; /* привязать к низу, как земля */
+  background-image: url("images/bg1.PNG");
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+  background-position: bottom;
+}
+
+/* Счет и HUD привяжем внутри игрового окна */
+#score {
+  font-size: 28px;  /* чуть меньше на десктопе */
 }
 
 #cat {
@@ -28,7 +36,7 @@ body {
   left: 5vw;
   width: 100px;
   height: 100px;
-  background: url("images/cat.png") no-repeat center/contain;
+  background: url("images/cat.PNG") no-repeat center/contain;
   transition: transform 0.5s;
 }
 
@@ -241,4 +249,34 @@ body {
 /* Если нужно, можно добавить небольшой тень */
 #connectWallet, #showLeaderboard {
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+@media (max-width: 768px) {
+  #game {
+    width: 95vw;   /* почти вся ширина */
+    height: 60vh;  /* ниже, чтобы влезало */
+  }
+
+  #cat {
+    width: 70px;
+    height: 70px;
+  }
+
+  .crystal {
+    width: 50px;
+    height: 70px;
+  }
+
+  .fire {
+    width: 60px;
+    height: 80px;
+  }
+
+  #score {
+    font-size: 22px;
+  }
+
+  .modal-content {
+    font-size: 18px;
+    padding: 16px;
+  }
 }

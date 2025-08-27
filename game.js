@@ -25,7 +25,7 @@ let clouds = [];
 scoreEl.innerText = "Score: " + score;
 
 // ---------- Background ----------
-const backgrounds = ["images/bg1.png", "images/bg2.png", "images/bg3.png"];
+const backgrounds = ["images/bg1.PNG", "images/bg2.PNG", "images/bg3.PNG"];
 let currentBg = 0;
 function changeBackground() {
   game.style.backgroundImage = `url(${backgrounds[currentBg]})`;
@@ -231,7 +231,7 @@ function loseLife() {
     obstacles = [];
     clouds = [];
 
-    cat.style.backgroundImage = `url("images/cat_dead.png")`;
+    cat.style.backgroundImage = `url("images/cat_dead.PNG")`;
     cat.style.transition = "transform 0.6s ease";
     cat.style.transform = "rotate(180deg)";
 
