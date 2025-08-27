@@ -1,0 +1,244 @@
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #000;
+  font-family: Arial, sans-serif;
+  color: #fff;
+}
+
+#game {
+  position: relative;
+  width: 100vw;     
+  height: 100vh;       
+  overflow: hidden;
+
+  background-image: url("images/bg1.png"); /* твоя картинка */
+  background-repeat: repeat-x; /* дублирование по горизонтали */
+  background-size: auto 100%;  /* высота подгоняется под экран, ширина — исходная */
+  background-position: bottom; /* привязать к низу, как земля */
+}
+
+#cat {
+  position: absolute;
+  bottom: 0;
+  left: 5vw;
+  width: 100px;
+  height: 100px;
+  background: url("images/cat.png") no-repeat center/contain;
+  transition: transform 0.5s;
+}
+
+
+#cat .hitbox {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  bottom: 10px;   
+  left: 20px;
+  background: rgba(255,0,0,0);
+  pointer-events: none;
+}
+
+.crystal {
+  position: absolute;
+  bottom: 0;
+  width: 70px;
+  height: 100px;
+  background: url("images/crystal.png") no-repeat center/contain;
+}
+
+
+.crystal .hitbox {
+  position: absolute;
+  width: 40px;
+  height: 50px;
+  bottom: 10px;      
+  left: 10px;       
+  background: rgba(0,255,0,0);
+  pointer-events: none;
+}
+
+#hud {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+#lives {
+  width: 7em;
+  height: 7em;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+#score {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 36px;
+  font-weight: bold;
+  color: #FFD700; /* золотой */
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+  z-index: 100;
+}
+
+
+.fire {
+  position: absolute;
+  bottom: 0;
+  width: 80px;
+  height: 100px;
+  background: url("images/fire.png") no-repeat center/contain;
+}
+
+
+.fire .hitbox {
+  position: absolute;
+  width: 50px;
+  height: 60px;
+  bottom: 10px;
+  left: 15px;
+  background: rgba(255, 0, 0, 0); 
+  pointer-events: none;
+}
+
+
+.cloud {
+  position: absolute;
+  top: 10vh;   
+  width: 120px;
+  height: 80px;
+  background: url("images/oblako.png") no-repeat center/contain;
+  opacity: 0.8;
+}
+#gameOverModal {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.7);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  color:white;
+  font-size:24px;
+}
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: rgba(20,20,20,0.95);
+  border: 1px solid #444;
+  border-radius: 16px;
+  padding: 24px 28px;
+  width: min(480px, 90vw);
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  text-align: center;
+}
+
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* Кнопки */
+.btn {
+  border: none;
+  padding: 12px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  background: #2d3436;
+  color: #fff;
+  transition: transform .05s ease, opacity .15s ease;
+}
+
+.btn:hover { opacity: .9; }
+.btn:active { transform: translateY(1px); }
+
+.btn.primary { background: #6c5ce7; }
+.btn.secondary { background: #2d3436; }
+
+.btn.small {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.save-status {
+  font-size: 14px;
+  opacity: .85;
+  margin-top: 8px;
+}
+
+.hidden { display: none !important; }
+
+/* Лидерборд */
+.leader-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+  max-height: 300px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.leader-list li {
+  padding: 8px 12px;
+  border-bottom: 1px solid #333;
+  font-size: 16px;
+}
+#connectWallet, #showLeaderboard {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 10px 16px;
+  font-size: 14px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  color: #fff;
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+#connectWallet {
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  margin-bottom: 8px;
+}
+
+#connectWallet:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+#showLeaderboard {
+  background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+}
+
+#showLeaderboard:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+/* Если нужно, можно добавить небольшой тень */
+#connectWallet, #showLeaderboard {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
