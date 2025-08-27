@@ -278,15 +278,27 @@ body {
     width: 70px;
     height: 70px;
   }
+  #cat .hitbox {
+    width: 35px;
+    height: 35px;
+  }
 
   .crystal {
     width: 50px;
     height: 70px;
   }
+  .crystal .hitbox {
+    width: 25px;
+    height: 30px;
+  }
 
   .fire {
     width: 60px;
     height: 80px;
+  }
+  .fire .hitbox {
+    width: 30px;
+    height: 40px;
   }
 
   #score {
