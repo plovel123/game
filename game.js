@@ -112,7 +112,7 @@ function createCloud() {
   cloud.classList.add("cloud");
   cloud.style.backgroundImage = `url(images/oblako.png)`;
   cloud.style.left = game.offsetWidth + "px";
-  cloud.style.top = (Math.random() * 20 + 30) + "vh";
+  cloud.style.top = (Math.random() * 8 + 14) + "vh";
   game.appendChild(cloud);
   clouds.push(cloud);
 }
