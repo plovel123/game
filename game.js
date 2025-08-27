@@ -268,8 +268,14 @@ document.addEventListener("keyup", (e) => {
 });
 
 game.addEventListener("mousedown", (e) => {
-  if (startOverlayEl) return;
-  if (e.target.tagName === "BUTTON" || e.target.closest(".modal")) return;
+  if (
+    e.target.tagName === "BUTTON" ||
+    e.target.tagName === "A" ||
+    e.target.closest("a") ||
+    e.target.closest(".modal") ||
+    startOverlayEl
+  ) return;
+
   if (pressingMouse) return;
   pressingMouse = true;
   pressStartTime = performance.now();
@@ -286,11 +292,20 @@ window.addEventListener("mouseup", (e) => {
 });
 
 game.addEventListener("touchstart", (e) => {
-  if (startOverlayEl) return;
-  if (e.target.tagName === "BUTTON" || e.target.closest(".modal")) return;
+  
+  if (
+    e.target.tagName === "BUTTON" ||
+    e.target.tagName === "A" ||
+    e.target.closest("a") ||
+    e.target.closest(".modal") ||
+    startOverlayEl
+  ) return;
+
   if (pressingTouch) return;
   pressingTouch = true;
   pressStartTime = performance.now();
+
+
   e.preventDefault && e.preventDefault();
 }, { passive: false });
 game.addEventListener("touchend", (e) => {
