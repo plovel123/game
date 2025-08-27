@@ -5,8 +5,6 @@
   <title>Cat Jump Game</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-  <script src="https://unpkg.com/@walletconnect/web3modal@2/dist/index.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
 <body>
   <div id="game">
@@ -18,16 +16,10 @@
 
     <div id="score">Score: 0</div>
 
-    <!-- Кнопки управления -->
-     <div id="wallet-qr"></div>
-    <button id="connectWallet" class="btn small">Connect Wallet</button>
-  
-    <!-- Модалка Game Over -->
     <div id="gameOverModal" class="modal" style="display: none;">
       <div class="modal-content">
         <h1>Game over</h1>
         <p>Score: <span id="finalScore">0</span></p>
-        <p id="saveStatus" class="save-status"></p>
         <div class="modal-actions">
           <button id="restartButton" class="btn primary">Play again</button>
         </div>
