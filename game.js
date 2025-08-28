@@ -201,6 +201,7 @@ if (isMobile) {
   speedIncrease = Math.max(0.12, speedIncrease * 0.55);
   OBSTACLE_Y_ADJUST = 4;
   trackOffset = 133;
+  FIRE_RELATIVE_ADJUST = 5;
 }
 function increaseSpeed() {
   if (obstacleSpeed < maxSpeed) {
