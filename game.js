@@ -1,5 +1,4 @@
-// game.js — финальная версия (инициалная позиция кота, строгий ground-level для препятствий,
-// run animation / bg movement только во время игры, dead sprite остаётся)
+// game.js — подъем спрайтов: trackOffset чуть больше, препятствия чуть меньше сдвинуты вниз
 // Требует: images/cat.png, images/cat_dead.PNG, cat1.png, cat2.png, crystal*.png, fire*.png, oblako.png, bg*.png
 
 const game = document.getElementById("game");
@@ -14,12 +13,19 @@ const leaderboardModal = document.getElementById("leaderboardModal");
 const closeLeaderboard = document.getElementById("closeLeaderboard");
 const showLeaderboardBtn = document.getElementById("showLeaderboard");
 
-// === Настройка: смещение "рельса" (поправьте, если нужно) ===
-// Меньше значение -> кот визуально ниже, больше -> выше.
-const trackOffset = 132; // положение базы кота внутри #game (px)
+// === Настройки (поднять спрайты) ===
+// Фоллбек/ориентир, если автоматическое вычисление не сработает:
+const BASE_TRACK_OFFSET = 140;   // чуть больше, чем раньше (поднимает кота)
+const TRACK_PERCENT = 0.27;      // 20% от высоты окна #game -> рельс (увеличивает высоту)
+const MIN_TRACK = 110;
+const MAX_TRACK = 160;
 
-// Немного опустить препятствия относительно рельса
-const OBSTACLE_Y_ADJUST = 6; // опустить грибы на ~6px
+// Препятствия: уменьшил сдвиг вниз чтобы они были повыше
+const OBSTACLE_Y_ADJUST = 6;   // было 6, стало 2 — грибы поднимаются вверх
+const FIRE_RELATIVE_ADJUST = 5; // огонек на том же уровне, что и грибы (0 = ровно на том же уровне)
+
+// trackOffset будет вычисляться динамически
+let trackOffset = BASE_TRACK_OFFSET;
 
 // === Sprite run animation ===
 const catFrames = ["cat1.png", "cat2.png"];
@@ -29,12 +35,10 @@ let animateRun = false;
 let isDead = false;
 
 function startRunAnimation() {
-  // не запускаем, если уже dead
   if (isDead) return;
-  stopRunAnimation(); // очистка старых
+  stopRunAnimation();
   animateRun = true;
   catFrameIndex = 0;
-  // выставляем первый кадр сразу
   cat.style.backgroundImage = `url(images/${catFrames[catFrameIndex]})`;
   catFrameInterval = setInterval(() => {
     if (!animateRun || isDead) return;
@@ -52,30 +56,52 @@ function stopRunAnimation() {
 }
 
 // === State ===
-let y = 0; // vertical offset above track (px)
-let vy = 0; // vertical speed px/s
+let y = 0;
+let vy = 0;
 let lives = 3;
 let score = 0;
-let paused = true; // стартуем в паузе — будет overlay
+let paused = true;
 let obstacles = [];
 let clouds = [];
 scoreEl.innerText = "Score: " + score;
 
-// Установим начальную позицию кота из JS, чтобы не было рассинхрона с CSS
-// (до первого кадра gameLoop)
-cat.style.bottom = trackOffset + "px";
-// стартовое изображение (статический кадр)
-cat.style.backgroundImage = `url(images/${catFrames[0]})`;
+// === Умное вычисление trackOffset ===
+function recomputeTrackOffset() {
+  const h = Math.max(320, game.clientHeight || 480);
+  let suggested = Math.round(h * TRACK_PERCENT);
+  suggested = Math.max(MIN_TRACK, Math.min(MAX_TRACK, suggested));
+  trackOffset = suggested || BASE_TRACK_OFFSET;
 
-// По умолчанию — пауза анимации фона (если в CSS фон запускается по #game)
-// Это позволяет управлять движением фона из JS.
-// Если в CSS анимация привязана к .bg-moving — это тоже ок; тут мы ставим playState.
-try { game.style.animationPlayState = "paused"; } catch (e) { /* ignore */ }
+  // обновим кота (и если он в воздухе - учитываем y в gameLoop, тут ставим базовую позицию)
+  cat.style.bottom = trackOffset + "px";
+  if (!cat.style.backgroundImage) {
+    cat.style.backgroundImage = `url(images/${catFrames[0]})`;
+  }
+}
+
+// initial compute + resize handler
+recomputeTrackOffset();
+window.addEventListener("resize", () => {
+  clearTimeout(window._gc_resize_to);
+  window._gc_resize_to = setTimeout(() => {
+    recomputeTrackOffset();
+    // скорректируем живые препятствия
+    obstacles.forEach((ob) => {
+      const cls = ob.classList.contains("fire") ? "fire" : "crystal";
+      const base = trackOffset - OBSTACLE_Y_ADJUST;
+      const extra = (cls === "fire") ? FIRE_RELATIVE_ADJUST : 0;
+      ob.style.bottom = Math.max(0, base + extra) + "px";
+    });
+    cat.style.bottom = trackOffset + "px";
+  }, 120);
+});
+
+// pause bg animation by default
+try { game.style.animationPlayState = "paused"; } catch (e) {}
 
 // === Start overlay ===
 let startOverlayEl = null;
 let onStartKey = null;
-
 function createStartOverlay() {
   if (startOverlayEl) return;
   const overlay = document.createElement("div");
@@ -89,7 +115,6 @@ function createStartOverlay() {
     background: rgba(0,0,0,0.65);
     z-index: 1200;
   `;
-
   const box = document.createElement("div");
   box.style = `
     background: rgba(18,18,18,0.95);
@@ -100,7 +125,6 @@ function createStartOverlay() {
     box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     width: min(520px, 90vw);
   `;
-
   const title = document.createElement("h2");
   title.textContent = "Press Start";
   title.style.margin = "0 0 12px 0";
@@ -113,7 +137,6 @@ function createStartOverlay() {
   btn.textContent = "Start";
   btn.style.fontSize = "18px";
   btn.style.padding = "10px 18px";
-
   box.appendChild(title);
   box.appendChild(info);
   box.appendChild(btn);
@@ -150,11 +173,9 @@ function createStartOverlay() {
 }
 createStartOverlay();
 
-// === Background helpers (if you use CSS .bg-moving or animation-play-state) ===
+// === Background helpers ===
 function enableBackgroundMovement() {
-  // если в CSS анимация привязана к #game, включим playState
   try { game.style.animationPlayState = "running"; } catch (e) {}
-  // также добавим класс, если у вас CSS ориентирован на .bg-moving
   game.classList.add("bg-moving");
 }
 function disableBackgroundMovement() {
@@ -168,7 +189,7 @@ function renderLives() {
 }
 renderLives();
 
-// === Movement / spawn parameters ===
+// === Movement parameters ===
 let obstacleSpeed = 4.2;
 let speedIncrease = 0.35;
 let speedInterval = 11000;
@@ -213,13 +234,12 @@ function createObstacle() {
   obstacle.classList.add("obstacle", type.class);
   obstacle.style.left = game.offsetWidth + "px";
 
-  // Жёсткая привязка ко "рельсу" + небольшая корректировка вниз
-  const finalBottom = Math.max(0, trackOffset - OBSTACLE_Y_ADJUST);
-  obstacle.style.bottom = finalBottom + "px";
+  let finalBottom = trackOffset - OBSTACLE_Y_ADJUST;
+  if (type.class === "fire") finalBottom += FIRE_RELATIVE_ADJUST;
 
+  obstacle.style.bottom = Math.max(0, finalBottom) + "px";
   obstacle.innerHTML = `<div class="hitbox"></div>`;
 
-  // sprite frames (если есть)
   let frames = [];
   if (type.class === "crystal") frames = ["crystal1.png","crystal2.png","crystal3.png","crystal4.png"];
   if (type.class === "fire") frames = ["fire1.png","fire2.png","fire3.png","fire4.png"];
@@ -227,7 +247,6 @@ function createObstacle() {
   if (frames.length) {
     obstacle.style.backgroundImage = `url(images/${frames[frameIndex]})`;
     const animId = setInterval(() => {
-      // очищаем когда элемент удалён
       if (!document.body.contains(obstacle)) { clearInterval(animId); return; }
       frameIndex = (frameIndex + 1) % frames.length;
       obstacle.style.backgroundImage = `url(images/${frames[frameIndex]})`;
@@ -250,7 +269,7 @@ function createCloud() {
   clouds.push(cloud);
 }
 
-// === Jump (single jump only) ===
+// === Jump (single) ===
 const GRAVITY = 2200;
 const BASE_JUMP_HEIGHT = 125;
 const MIN_STRENGTH = 0.95;
@@ -288,7 +307,7 @@ function startJumpWithStrength(strength) {
   } catch (e) { console.error(e); return false; }
 }
 
-// === Input handlers (blocked while start overlay exists) ===
+// === Input handlers ===
 let pressStartTime = 0;
 let pressingKey = false;
 let pressingMouse = false;
@@ -358,21 +377,17 @@ function loseLife() {
     paused = true;
     isDead = true;
 
-    // Остановим всё анимации и фон
     stopRunAnimation();
     disableBackgroundMovement();
 
-    // очистим объекты
     obstacles.forEach(o => o.remove());
     clouds.forEach(c => c.remove());
     obstacles = [];
     clouds = [];
 
-    // поставим мёртвую модель (без возврата)
     cat.style.backgroundImage = `url("images/cat_dead.PNG")`;
     cat.style.transition = "transform 0.6s ease";
     cat.style.transform = "rotate(180deg)";
-    // и зафиксируем позицию (вдруг)
     cat.style.bottom = (trackOffset) + "px";
 
     setTimeout(async () => {
@@ -400,7 +415,6 @@ function loseLife() {
     return;
   }
 
-  // обычная потеря жизни — заморозка + блинк
   paused = true;
   stopRunAnimation();
   disableBackgroundMovement();
@@ -417,7 +431,6 @@ function loseLife() {
       obstacles = [];
       clouds = [];
       paused = false;
-      // только если кот не мёртв — возобновляем анимации
       if (!isDead) {
         startRunAnimation();
         enableBackgroundMovement();
@@ -463,7 +476,6 @@ function gameLoop(time) {
     lastTime = time;
 
     if (!paused) {
-      // physics
       if (Math.abs(vy) > 0 || y > 0) {
         vy -= GRAVITY * dt;
         y += vy * dt;
@@ -482,11 +494,9 @@ function gameLoop(time) {
             }
           }
         }
-        // cat bottom = trackOffset + current y (so base + vertical jump)
         cat.style.bottom = Math.round(y + trackOffset) + "px";
       }
 
-      // move obstacles
       const speedPxPerSec = Math.max(40, obstacleSpeed * 60);
       for (let i = obstacles.length - 1; i >= 0; i--) {
         const ob = obstacles[i];
@@ -510,7 +520,6 @@ function gameLoop(time) {
         }
       }
 
-      // move clouds
       for (let i = clouds.length - 1; i >= 0; i--) {
         const c = clouds[i];
         let left = parseFloat(c.style.left);
@@ -523,7 +532,6 @@ function gameLoop(time) {
         }
       }
 
-      // spawn
       const nowSec = time / 1000;
       if (nowSec >= nextObstacleSpawnSec) {
         createObstacle();
@@ -547,7 +555,7 @@ function gameLoop(time) {
 }
 requestAnimationFrame(gameLoop);
 
-// === Leaderboard UI (если нужно) ===
+// === Leaderboard UI ===
 showLeaderboardBtn && showLeaderboardBtn.addEventListener("click", async (e) => {
   try {
     const res = await fetch("/leaderboard");
@@ -589,7 +597,6 @@ function startGame() {
   scheduleNextObstacle();
   scheduleNextCloud();
 
-  // включаем фон и анимацию бега
   startRunAnimation();
   enableBackgroundMovement();
 }
