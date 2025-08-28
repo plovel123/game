@@ -16,7 +16,7 @@ const showLeaderboardBtn = document.getElementById("showLeaderboard");
 // === Настройки (поднять спрайты) ===
 // Фоллбек/ориентир, если автоматическое вычисление не сработает:
 let BASE_TRACK_OFFSET = 140;   // чуть больше, чем раньше (поднимает кота)
-const TRACK_PERCENT = 0.27;      // 20% от высоты окна #game -> рельс (увеличивает высоту)
+let TRACK_PERCENT = 0.27;      // 20% от высоты окна #game -> рельс (увеличивает высоту)
 let MIN_TRACK = 110;
 let MAX_TRACK = 160;
 
@@ -199,8 +199,7 @@ const isMobile = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
 if (isMobile) {
   obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
   speedIncrease = Math.max(0.12, speedIncrease * 0.55);
-  BASE_TRACK_OFFSET =200;
-  MAX_TRACK=200;
+
 }
 function increaseSpeed() {
   if (obstacleSpeed < maxSpeed) {
