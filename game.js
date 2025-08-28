@@ -1,5 +1,5 @@
-// game.js — no double-jump, obstacles at ground level only
-// Требует: images/cat.png, images/cat_dead.png, crystal.png, fire.png, oblako.png, bg*.png
+// game.js — исправлено: кот опущен ниже, все препятствия на одном уровне с котом
+// Требует: images/cat.png, images/cat_dead.PNG, cat1.png, cat2.png, crystal*.png, fire*.png, oblako.png, bg*.png
 
 const game = document.getElementById("game");
 const cat = document.getElementById("cat");
@@ -12,27 +12,54 @@ const saveStatusEl = document.getElementById("saveStatus");
 const leaderboardModal = document.getElementById("leaderboardModal");
 const closeLeaderboard = document.getElementById("closeLeaderboard");
 const showLeaderboardBtn = document.getElementById("showLeaderboard");
-const trackOffset = 140;
 
+// ---------- IMPORTANT: adjust this to move the cat up/down ----------
+// Decrease value -> cat moves down visually (closer to bottom of game area).
+// Increase value -> cat moves up.
+// I lowered it slightly for you. If you want it 5px lower, subtract 5 etc.
+const trackOffset = 132; // was 140; now a few pixels lower so cat sits a bit lower
+
+// ---------- Sprite run animation ----------
 const catFrames = ["cat1.png","cat2.png"];
 let catFrameIndex = 0;
-setInterval(() => {
-  catFrameIndex = (catFrameIndex + 1) % catFrames.length;
-  cat.style.backgroundImage = `url(images/${catFrames[catFrameIndex]})`;
-}, 250);
+let catFrameInterval = null;
+let animateRun = false;
+let isDead = false;
+
+function startRunAnimation() {
+  if (catFrameInterval) clearInterval(catFrameInterval);
+  animateRun = true;
+  if (!isDead) {
+    catFrameIndex = 0;
+    cat.style.backgroundImage = `url(images/${catFrames[catFrameIndex]})`;
+  }
+  catFrameInterval = setInterval(() => {
+    if (!animateRun || isDead) return;
+    catFrameIndex = (catFrameIndex + 1) % catFrames.length;
+    cat.style.backgroundImage = `url(images/${catFrames[catFrameIndex]})`;
+  }, 250);
+}
+
+function stopRunAnimation() {
+  animateRun = false;
+  if (catFrameInterval) {
+    clearInterval(catFrameInterval);
+    catFrameInterval = null;
+  }
+}
 
 // ---------- State ----------
-let y = 0;                 // высота кота от земли (px)
-let vy = 0;                // вертикальная скорость (px/s)
+let y = 0;
+let vy = 0;
 let lives = 3;
 let score = 0;
-let paused = true;         // стартуем в паузе (появится Start)
+let paused = true;
 let obstacles = [];
 let clouds = [];
 
 scoreEl.innerText = "Score: " + score;
 
-// ---------- UI: Start overlay ----------
+// ---------- Start overlay ----------
 let startOverlayEl = null;
 let onStartKey = null;
 
@@ -111,14 +138,12 @@ function createStartOverlay() {
 createStartOverlay();
 
 // ---------- Background ----------
- const backgrounds = ["images/bg1.PNG", "images/bg2.PNG", "images/bg3.PNG"];
- let currentBg = 0;
- function changeBackground() {
+const backgrounds = ["images/bg1.PNG", "images/bg2.PNG", "images/bg3.PNG"];
+let currentBg = 0;
+function changeBackground() {
   game.style.backgroundImage = `url(${backgrounds[currentBg]})`;
   currentBg = (currentBg + 1) % backgrounds.length;
 }
-// changeBackground();
-// setInterval(changeBackground, 30000);
 
 // ---------- Lives ----------
 function renderLives() {
@@ -131,14 +156,11 @@ let obstacleSpeed = 4.2;
 let speedIncrease = 0.35;
 let speedInterval = 11000;
 let maxSpeed = 11;
-
-// mobile tweak
 const isMobile = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
 if (isMobile) {
   obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
   speedIncrease = Math.max(0.12, speedIncrease * 0.55);
 }
-
 function increaseSpeed() {
   if (obstacleSpeed < maxSpeed) {
     obstacleSpeed += speedIncrease;
@@ -152,61 +174,54 @@ increaseSpeed();
 function getHitboxRect(el) {
   const box = el ? (el.querySelector ? el.querySelector(".hitbox") : null) : null;
   if (!box || !box.getBoundingClientRect) {
-    try {
-      return el.getBoundingClientRect();
-    } catch (e) {
-      return { left: 0, right: 0, top: 0, bottom: 0 };
-    }
+    try { return el.getBoundingClientRect(); } catch (e) { return { left:0,right:0,top:0,bottom:0 }; }
   }
-  try {
-    return box.getBoundingClientRect();
-  } catch (e) {
-    return { left: 0, right: 0, top: 0, bottom: 0 };
-  }
+  try { return box.getBoundingClientRect(); } catch (e) { return { left:0,right:0,top:0,bottom:0 }; }
 }
 function isColliding(catEl, obstacleEl) {
   const catBox = getHitboxRect(catEl);
   const obstacleBox = getHitboxRect(obstacleEl);
-  return !(
-    catBox.right < obstacleBox.left ||
-    catBox.left > obstacleBox.right ||
-    catBox.bottom < obstacleBox.top ||
-    catBox.top > obstacleBox.bottom
-  );
+  return !(catBox.right < obstacleBox.left || catBox.left > obstacleBox.right || catBox.bottom < obstacleBox.top || catBox.top > obstacleBox.bottom);
 }
 
 // ---------- Obstacles / Clouds ----------
-// Все препятствия строго на земле (bottom: 0)
+// All obstacles spawn strictly at ground level (= aligned with cat base)
 const obstacleTypes = [
   { img: "images/crystal.png", class: "crystal" },
   { img: "images/fire.png", class: "fire" }
 ];
 
+const OBSTACLE_Y_ADJUST = 6; // подкорректируй (напр. 4..8). 6 — хорошее стартовое значение.
+
+// ---------- Obstacles ----------
 function createObstacle() {
   const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
   const obstacle = document.createElement("div");
   obstacle.classList.add("obstacle", type.class);
   obstacle.style.left = game.offsetWidth + "px";
-  if (type.class === "crystal") {
-  obstacle.style.bottom = (trackOffset - 10) + "px"; // поднимаем/опускаем на глаз
-} else {
-  obstacle.style.bottom = trackOffset + "px";
-}
+
+  // Все препятствия привязываем к одной базовой линии (trackOffset),
+  // и опускаем дополнительно на OBSTACLE_Y_ADJUST пикселей.
+  const finalBottom = Math.max(0, trackOffset - OBSTACLE_Y_ADJUST);
+  obstacle.style.bottom = finalBottom + "px";
 
   obstacle.innerHTML = `<div class="hitbox"></div>`;
 
-  // спрайтовая анимация
+  // sprite frames (если есть) — локальная анимация, очистится сама при remove()
   let frames = [];
   if (type.class === "crystal") frames = ["crystal1.png","crystal2.png","crystal3.png","crystal4.png"];
   if (type.class === "fire") frames = ["fire1.png","fire2.png","fire3.png","fire4.png"];
-  
   let frameIndex = 0;
-  obstacle.style.backgroundImage = `url(images/${frames[frameIndex]})`;
-  
-  setInterval(() => {
-    frameIndex = (frameIndex + 1) % frames.length;
+  if (frames.length) {
     obstacle.style.backgroundImage = `url(images/${frames[frameIndex]})`;
-  }, 150);
+    const animId = setInterval(() => {
+      if (!document.body.contains(obstacle)) { clearInterval(animId); return; }
+      frameIndex = (frameIndex + 1) % frames.length;
+      obstacle.style.backgroundImage = `url(images/${frames[frameIndex]})`;
+    }, 150);
+  } else {
+    obstacle.style.backgroundImage = `url(${type.img})`;
+  }
 
   game.appendChild(obstacle);
   obstacles.push(obstacle);
@@ -217,20 +232,18 @@ function createCloud() {
   cloud.classList.add("cloud");
   cloud.style.backgroundImage = `url(images/oblako.png)`;
   cloud.style.left = game.offsetWidth + "px";
-  const topVh = (Math.random() * 8 + 2);
-  cloud.style.top = topVh + "vh";
+  cloud.style.top = (Math.random() * 8 + 2) + "vh";
   game.appendChild(cloud);
   clouds.push(cloud);
 }
 
-// ---------- Jump system (single jump only) ----------
-const GRAVITY = 2200; // px/s^2
-const BASE_JUMP_HEIGHT = 125; // px for strength = 1
+// ---------- Jump (single) ----------
+const GRAVITY = 2200;
+const BASE_JUMP_HEIGHT = 125;
 const MIN_STRENGTH = 0.95;
 const MAX_STRENGTH = 1.85;
 const LONG_PRESS_MS = 380;
-
-const maxJumps = 1;       // <-- Только один прыжок
+const maxJumps = 1;
 let jumpsUsed = 0;
 const coyoteTime = 0.12;
 let lastGroundTime = -9999;
@@ -241,13 +254,11 @@ function computeStrength(ms) {
   const t = Math.min(ms, LONG_PRESS_MS) / LONG_PRESS_MS;
   return MIN_STRENGTH + (MAX_STRENGTH - MIN_STRENGTH) * t;
 }
-
 function canJumpNow(nowSec) {
   if (jumpsUsed < maxJumps) return true;
   if (nowSec - lastGroundTime <= coyoteTime) return true;
   return false;
 }
-
 function startJumpWithStrength(strength) {
   try {
     if (!Number.isFinite(strength)) strength = MIN_STRENGTH;
@@ -261,20 +272,17 @@ function startJumpWithStrength(strength) {
     vy = v0;
     jumpsUsed++;
     return true;
-  } catch (e) {
-    console.error("startJumpWithStrength error:", e);
-    return false;
-  }
+  } catch (e) { console.error(e); return false; }
 }
 
-// Input handling: игнорируем ввод, когда стартовый оверлей открыт
+// Input handlers (blocked while start overlay exists)
 let pressStartTime = 0;
 let pressingKey = false;
 let pressingMouse = false;
 let pressingTouch = false;
 
 document.addEventListener("keydown", (e) => {
-  if (startOverlayEl) return;            // блокируем ввод до старта
+  if (startOverlayEl) return;
   if (e.repeat) return;
   if ((e.code === "Space" || e.code === "ArrowUp") && !pressingKey) {
     pressingKey = true;
@@ -294,14 +302,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 game.addEventListener("mousedown", (e) => {
-  if (
-    e.target.tagName === "BUTTON" ||
-    e.target.tagName === "A" ||
-    e.target.closest("a") ||
-    e.target.closest(".modal") ||
-    startOverlayEl
-  ) return;
-
+  if (e.target.tagName === "BUTTON" || e.target.tagName === "A" || e.target.closest("a") || e.target.closest(".modal") || startOverlayEl) return;
   if (pressingMouse) return;
   pressingMouse = true;
   pressStartTime = performance.now();
@@ -318,20 +319,10 @@ window.addEventListener("mouseup", (e) => {
 });
 
 game.addEventListener("touchstart", (e) => {
-  
-  if (
-    e.target.tagName === "BUTTON" ||
-    e.target.tagName === "A" ||
-    e.target.closest("a") ||
-    e.target.closest(".modal") ||
-    startOverlayEl
-  ) return;
-
+  if (e.target.tagName === "BUTTON" || e.target.tagName === "A" || e.target.closest("a") || e.target.closest(".modal") || startOverlayEl) return;
   if (pressingTouch) return;
   pressingTouch = true;
   pressStartTime = performance.now();
-
-
   e.preventDefault && e.preventDefault();
 }, { passive: false });
 game.addEventListener("touchend", (e) => {
@@ -352,6 +343,10 @@ function loseLife() {
 
   if (lives <= 0) {
     paused = true;
+    isDead = true;
+    stopRunAnimation();
+    game.classList.remove("bg-moving");
+
     obstacles.forEach(o => o.remove());
     clouds.forEach(c => c.remove());
     obstacles = [];
@@ -386,6 +381,9 @@ function loseLife() {
   }
 
   paused = true;
+  stopRunAnimation();
+  game.classList.remove("bg-moving");
+
   let blinkCount = 0;
   const blink = setInterval(() => {
     cat.style.opacity = cat.style.opacity === "0" ? "1" : "0";
@@ -398,6 +396,10 @@ function loseLife() {
       obstacles = [];
       clouds = [];
       paused = false;
+      if (!isDead) {
+        startRunAnimation();
+        game.classList.add("bg-moving");
+      }
     }
   }, 300);
 }
@@ -408,9 +410,7 @@ const MIN_GAP_PX_BASE_MOBILE = 300;
 const MIN_GAP_PX_BASE = isMobile ? MIN_GAP_PX_BASE_MOBILE : MIN_GAP_PX_BASE_DESKTOP;
 
 let nextObstacleSpawnSec = performance.now() / 1000 + 1.0;
-function sampleExp(mean) {
-  return -Math.log(1 - Math.random()) * mean;
-}
+function sampleExp(mean) { return -Math.log(1 - Math.random()) * mean; }
 function scheduleNextObstacle() {
   const now = performance.now() / 1000;
   const speedPxPerSec = Math.max(40, obstacleSpeed * 60);
@@ -441,14 +441,13 @@ function gameLoop(time) {
     lastTime = time;
 
     if (!paused) {
-      // physics
       if (Math.abs(vy) > 0 || y > 0) {
         vy -= GRAVITY * dt;
         y += vy * dt;
         if (y <= 0) {
           y = 0;
           vy = 0;
-          jumpsUsed = 0;                 // сбрасываем использование прыжка при касании земли
+          jumpsUsed = 0;
           lastGroundTime = performance.now() / 1000;
           if (lastJumpRequest) {
             const nowSec = performance.now() / 1000;
@@ -463,7 +462,6 @@ function gameLoop(time) {
         cat.style.bottom = Math.round(y + trackOffset) + "px";
       }
 
-      // move obstacles
       const speedPxPerSec = Math.max(40, obstacleSpeed * 60);
       for (let i = obstacles.length - 1; i >= 0; i--) {
         const ob = obstacles[i];
@@ -478,9 +476,7 @@ function gameLoop(time) {
             loseLife();
             continue;
           }
-        } catch (e) {
-          console.error("Collision check error:", e);
-        }
+        } catch (e) { console.error("Collision check error:", e); }
         if (left < -200) {
           ob.remove();
           obstacles.splice(i, 1);
@@ -489,7 +485,6 @@ function gameLoop(time) {
         }
       }
 
-      // clouds
       for (let i = clouds.length - 1; i >= 0; i--) {
         const c = clouds[i];
         let left = parseFloat(c.style.left);
@@ -502,7 +497,6 @@ function gameLoop(time) {
         }
       }
 
-      // spawn
       const nowSec = time / 1000;
       if (nowSec >= nextObstacleSpawnSec) {
         createObstacle();
@@ -557,6 +551,7 @@ function startGame() {
   lives = 3;
   y = 0;
   vy = 0;
+  isDead = false;
   obstacles.forEach(o => o.remove());
   clouds.forEach(c => c.remove());
   obstacles = [];
@@ -566,4 +561,8 @@ function startGame() {
   lastTime = performance.now();
   scheduleNextObstacle();
   scheduleNextCloud();
+
+  // enable background movement and run animation at game start
+  startRunAnimation();
+  game.classList.add("bg-moving");
 }
