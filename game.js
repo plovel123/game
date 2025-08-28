@@ -15,14 +15,14 @@ const showLeaderboardBtn = document.getElementById("showLeaderboard");
 
 // === Настройки (поднять спрайты) ===
 // Фоллбек/ориентир, если автоматическое вычисление не сработает:
-const BASE_TRACK_OFFSET = 140;   // чуть больше, чем раньше (поднимает кота)
+let BASE_TRACK_OFFSET = 140;   // чуть больше, чем раньше (поднимает кота)
 const TRACK_PERCENT = 0.27;      // 20% от высоты окна #game -> рельс (увеличивает высоту)
 const MIN_TRACK = 110;
 const MAX_TRACK = 160;
 
 // Препятствия: уменьшил сдвиг вниз чтобы они были повыше
-const OBSTACLE_Y_ADJUST = 6;   // было 6, стало 2 — грибы поднимаются вверх
-const FIRE_RELATIVE_ADJUST = 6; // огонек на том же уровне, что и грибы (0 = ровно на том же уровне)
+let OBSTACLE_Y_ADJUST = 6;   // было 6, стало 2 — грибы поднимаются вверх
+let FIRE_RELATIVE_ADJUST = 6; // огонек на том же уровне, что и грибы (0 = ровно на том же уровне)
 
 // trackOffset будет вычисляться динамически
 let trackOffset = BASE_TRACK_OFFSET;
@@ -199,7 +199,8 @@ const isMobile = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
 if (isMobile) {
   obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
   speedIncrease = Math.max(0.12, speedIncrease * 0.55);
-  TRACK_PERCENT = 0.38
+  BASE_TRACK_OFFSET =200;
+  FIRE_RELATIVE_ADJUST = 0;
 }
 function increaseSpeed() {
   if (obstacleSpeed < maxSpeed) {
