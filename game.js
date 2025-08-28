@@ -27,6 +27,7 @@ const FIRE_RELATIVE_ADJUST = 6; // огонек на том же уровне, �
 // trackOffset будет вычисляться динамически
 let trackOffset = BASE_TRACK_OFFSET;
 
+
 // === Sprite run animation ===
 const catFrames = ["cat1.png", "cat2.png"];
 let catFrameIndex = 0;
@@ -198,6 +199,7 @@ const isMobile = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
 if (isMobile) {
   obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
   speedIncrease = Math.max(0.12, speedIncrease * 0.55);
+  TRACK_PERCENT = 0.38
 }
 function increaseSpeed() {
   if (obstacleSpeed < maxSpeed) {
