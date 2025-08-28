@@ -12,6 +12,14 @@ const saveStatusEl = document.getElementById("saveStatus");
 const leaderboardModal = document.getElementById("leaderboardModal");
 const closeLeaderboard = document.getElementById("closeLeaderboard");
 const showLeaderboardBtn = document.getElementById("showLeaderboard");
+const trackOffset = 140;
+
+const catFrames = ["cat1.png","cat2.png"];
+let catFrameIndex = 0;
+setInterval(() => {
+  catFrameIndex = (catFrameIndex + 1) % catFrames.length;
+  cat.style.backgroundImage = `url(images/${catFrames[catFrameIndex]})`;
+}, 250);
 
 // ---------- State ----------
 let y = 0;                 // высота кота от земли (px)
@@ -103,14 +111,14 @@ function createStartOverlay() {
 createStartOverlay();
 
 // ---------- Background ----------
-const backgrounds = ["images/bg1.PNG", "images/bg2.PNG", "images/bg3.PNG"];
-let currentBg = 0;
-function changeBackground() {
+ const backgrounds = ["images/bg1.PNG", "images/bg2.PNG", "images/bg3.PNG"];
+ let currentBg = 0;
+ function changeBackground() {
   game.style.backgroundImage = `url(${backgrounds[currentBg]})`;
   currentBg = (currentBg + 1) % backgrounds.length;
 }
-changeBackground();
-setInterval(changeBackground, 30000);
+// changeBackground();
+// setInterval(changeBackground, 30000);
 
 // ---------- Lives ----------
 function renderLives() {
@@ -178,10 +186,28 @@ function createObstacle() {
   const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
   const obstacle = document.createElement("div");
   obstacle.classList.add("obstacle", type.class);
-  obstacle.style.backgroundImage = `url(${type.img})`;
   obstacle.style.left = game.offsetWidth + "px";
-  obstacle.style.bottom = "0px"; // ВСЕ препятствия — на земле
+  if (type.class === "crystal") {
+  obstacle.style.bottom = (trackOffset - 10) + "px"; // поднимаем/опускаем на глаз
+} else {
+  obstacle.style.bottom = trackOffset + "px";
+}
+
   obstacle.innerHTML = `<div class="hitbox"></div>`;
+
+  // спрайтовая анимация
+  let frames = [];
+  if (type.class === "crystal") frames = ["crystal1.png","crystal2.png","crystal3.png","crystal4.png"];
+  if (type.class === "fire") frames = ["fire1.png","fire2.png","fire3.png","fire4.png"];
+  
+  let frameIndex = 0;
+  obstacle.style.backgroundImage = `url(images/${frames[frameIndex]})`;
+  
+  setInterval(() => {
+    frameIndex = (frameIndex + 1) % frames.length;
+    obstacle.style.backgroundImage = `url(images/${frames[frameIndex]})`;
+  }, 150);
+
   game.appendChild(obstacle);
   obstacles.push(obstacle);
 }
@@ -434,7 +460,7 @@ function gameLoop(time) {
             }
           }
         }
-        cat.style.bottom = Math.round(y) + "px";
+        cat.style.bottom = Math.round(y + trackOffset) + "px";
       }
 
       // move obstacles
