@@ -213,10 +213,10 @@ if (isMobile) {
     // Телеграм-браузер — поправляем сильнее
     obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
     speedIncrease = Math.max(0.12, speedIncrease * 0.55);
-    BASE_TRACK_OFFSET = 120;  // чуть меньше
-    trackOffset = 120;
-    OBSTACLE_Y_ADJUST = 6;   // можно даже отрицательно подвинуть
-    FIRE_RELATIVE_ADJUST = 6;
+    BASE_TRACK_OFFSET = 300;  // чуть меньше
+    trackOffset = 300;
+    OBSTACLE_Y_ADJUST = 20;   // можно даже отрицательно подвинуть
+    FIRE_RELATIVE_ADJUST = 20;
   } else {
     // Обычный Chrome / Safari
     obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
