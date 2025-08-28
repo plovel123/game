@@ -206,17 +206,17 @@ let speedIncrease = 0.35;
 let speedInterval = 11000;
 let maxSpeed = 11;
 const ua = navigator.userAgent.toLowerCase();
-const isTelegram = ua.includes("telegram") || ua.includes("tg");
+const isTelegram = ua.includes("telegram") || ua.includes("tg") || ua.includes("webview") || ua.includes("wv");
 const isMobile = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
 if (isMobile) {
   if (isTelegram) {
     // Телеграм-браузер — поправляем сильнее
     obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
     speedIncrease = Math.max(0.12, speedIncrease * 0.55);
-    BASE_TRACK_OFFSET = 300;  // чуть меньше
-    trackOffset = 300;
-    OBSTACLE_Y_ADJUST = 20;   // можно даже отрицательно подвинуть
-    FIRE_RELATIVE_ADJUST = 20;
+    BASE_TRACK_OFFSET = 120;  // чуть меньше
+    trackOffset = 120;
+    OBSTACLE_Y_ADJUST = 6;   // можно даже отрицательно подвинуть
+    FIRE_RELATIVE_ADJUST = 6;
   } else {
     // Обычный Chrome / Safari
     obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
