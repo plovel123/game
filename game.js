@@ -205,14 +205,27 @@ let obstacleSpeed = 4.2;
 let speedIncrease = 0.35;
 let speedInterval = 11000;
 let maxSpeed = 11;
+const ua = navigator.userAgent.toLowerCase();
+const isTelegram = ua.includes("telegram") || ua.includes("tg");
 const isMobile = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
 if (isMobile) {
-  obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
-  speedIncrease = Math.max(0.12, speedIncrease * 0.55);
-  BASE_TRACK_OFFSET = 133;
-  OBSTACLE_Y_ADJUST = 4;
-  trackOffset = 133;
-  FIRE_RELATIVE_ADJUST = 5;
+  if (isTelegram) {
+    // Телеграм-браузер — поправляем сильнее
+    obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
+    speedIncrease = Math.max(0.12, speedIncrease * 0.55);
+    BASE_TRACK_OFFSET = 120;  // чуть меньше
+    trackOffset = 120;
+    OBSTACLE_Y_ADJUST = 6;   // можно даже отрицательно подвинуть
+    FIRE_RELATIVE_ADJUST = 6;
+  } else {
+    // Обычный Chrome / Safari
+    obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
+    speedIncrease = Math.max(0.12, speedIncrease * 0.55);
+    BASE_TRACK_OFFSET = 133;
+    trackOffset = 133;
+    OBSTACLE_Y_ADJUST = 4;
+    FIRE_RELATIVE_ADJUST = 5;
+  }
 }
 function increaseSpeed() {
   if (obstacleSpeed < maxSpeed) {
