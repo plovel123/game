@@ -262,23 +262,41 @@ body {
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 .game-btn {
-  position: absolute;   /* фиксируем позицию */
-  top: 20px;            /* отступ сверху */
-  right: 20px;          /* отступ справа */
-  padding: 10px 20px;
-  background-color: #ff9800;
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
-  border-radius: 8px;
-  transition: background 0.3s;
-  z-index: 1000;       
-   touch-action: manipulation; /* чтобы не перекрывалась другими элементами */
+  position: absolute;
+  top: 20px;
+  right: 20px;
+
+  padding: 14px 32px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #000;
+
+  background: linear-gradient(180deg, #ffffff 0%, #f6f6f6 100%);
+  border: 2px solid #b3862b;     /* мягкая охра */
+  border-radius: 18px;
+
+  cursor: pointer;
+  text-decoration: none;          /* без подчёркивания */
+  text-shadow: none;
+
+  /* сильно уменьшили тени */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+  transition: transform .08s ease, box-shadow .15s ease, background .2s ease, color .2s ease;
+  user-select: none;
+  z-index: 1000;
+  touch-action: manipulation;
 }
-
-
 .game-btn:hover {
-  background-color: #e68900;
+  transform: scale(1.02);
+  background: linear-gradient(180deg, #fffaf0 0%, #f3efe6 100%);  /* чуть теплее при ховере */
+  color: #8d6b22;                         /* приглушённая охра для текста */
+  box-shadow: 0 3px 10px rgba(0,0,0,0.10); /* чуть-чуть сильнее при ховере */
+}
+.game-btn:active {
+  transform: scale(.97);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);  /* минимально при нажатии */
 }
 @media (max-width: 768px) {
   #game {
