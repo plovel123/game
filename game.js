@@ -22,7 +22,7 @@ const MAX_TRACK = 160;
 
 // Препятствия: уменьшил сдвиг вниз чтобы они были повыше
 const OBSTACLE_Y_ADJUST = 6;   // было 6, стало 2 — грибы поднимаются вверх
-const FIRE_RELATIVE_ADJUST = 5; // огонек на том же уровне, что и грибы (0 = ровно на том же уровне)
+const FIRE_RELATIVE_ADJUST = 6; // огонек на том же уровне, что и грибы (0 = ровно на том же уровне)
 
 // trackOffset будет вычисляться динамически
 let trackOffset = BASE_TRACK_OFFSET;
