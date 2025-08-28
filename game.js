@@ -144,6 +144,16 @@ function createStartOverlay() {
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   startOverlayEl = overlay;
+  const preloadImages = [
+  "cat1.png", "cat2.png", "cat_dead.PNG",
+  "crystal1.png","crystal2.png","crystal3.png","crystal4.png",
+  "fire1.png","fire2.png","fire3.png","fire4.png",
+  "oblako.png","bg1.png","bg2.png"
+];
+preloadImages.forEach(src => {
+  const img = new Image();
+  img.src = "images/" + src;
+});
 
   const removeStartListener = () => {
     if (onStartKey) {
