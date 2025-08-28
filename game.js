@@ -199,6 +199,7 @@ const isMobile = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
 if (isMobile) {
   obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
   speedIncrease = Math.max(0.12, speedIncrease * 0.55);
+  BASE_TRACK_OFFSET = 133;
   OBSTACLE_Y_ADJUST = 4;
   trackOffset = 133;
   FIRE_RELATIVE_ADJUST = 5;
