@@ -209,7 +209,7 @@ const ua = navigator.userAgent.toLowerCase();
 const screenRatio = window.innerHeight / window.innerWidth;
 const isMobile = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
 if (isMobile) {
-   if (screenRatio < 5) { 
+   if (screenRatio < 1.7) { 
     // Telegram часто режет viewport
     BASE_TRACK_OFFSET = 120;
     trackOffset = 120;
