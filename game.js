@@ -206,16 +206,14 @@ let speedIncrease = 0.35;
 let speedInterval = 11000;
 let maxSpeed = 11;
 const ua = navigator.userAgent.toLowerCase();
-const isTelegram = ua.includes("telegram") || ua.includes("tg") || ua.includes("webview") || ua.includes("wv");
+const screenRatio = window.innerHeight / window.innerWidth;
 const isMobile = (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
 if (isMobile) {
-  if (isTelegram) {
-    // Телеграм-браузер — поправляем сильнее
-    obstacleSpeed = Math.max(2.6, obstacleSpeed * 0.75);
-    speedIncrease = Math.max(0.12, speedIncrease * 0.55);
-    BASE_TRACK_OFFSET = 120;  // чуть меньше
+   if (screenRatio < 1.5) { 
+    // Telegram часто режет viewport
+    BASE_TRACK_OFFSET = 120;
     trackOffset = 120;
-    OBSTACLE_Y_ADJUST = 6;   // можно даже отрицательно подвинуть
+    OBSTACLE_Y_ADJUST = 6;
     FIRE_RELATIVE_ADJUST = 6;
   } else {
     // Обычный Chrome / Safari
